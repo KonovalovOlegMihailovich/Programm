@@ -20,13 +20,12 @@ namespace filecreater
 
         private string path = $@"{Directory.GetParent(Directory.GetParent(Directory.GetParent(Directory.GetCurrentDirectory()).ToString()).ToString())}\test\";
 
-        public Dictionary<String, func> menu = new Dictionary<string, func>();
+        public Dictionary<String, func> menu;
 
         public readonly string[] array = { "FileCreater", "Search" };
 
         private void Filecreater()
         {
-            if (Directory.Exists(path)) Directory.CreateDirectory(path);
             var rand = new Random();
             Console.Write("Enter count: ");
             int k = int.Parse(Console.ReadLine());
@@ -68,8 +67,12 @@ namespace filecreater
         
         public Program()
         {
-            menu[array[0]] = Filecreater;
-            menu[array[1]] = Search;
+            menu = new Dictionary<string, func> 
+            { 
+                [array[0]] = Filecreater,
+                [array[1]] = Search    
+            };
+            if (Directory.Exists(path)) Directory.CreateDirectory(path);
         }
 
         static void Main(string[] args)
