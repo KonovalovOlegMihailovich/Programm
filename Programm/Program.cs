@@ -26,6 +26,7 @@ namespace filecreater
 
         private void Filecreater()
         {
+            if (Directory.Exists(path)) Directory.CreateDirectory(path);
             var rand = new Random();
             Console.Write("Enter count: ");
             int k = int.Parse(Console.ReadLine());
@@ -42,7 +43,7 @@ namespace filecreater
                     name += Convert.ToChar(rand.Next(97, 122));
                 }
                 Console.WriteLine(name);
-                File.Create(@$"{path}{name}");
+                File.Create($"{path}{name}");
             }
         }
 
@@ -50,7 +51,7 @@ namespace filecreater
         {
             Console.Write("Enter mask for search: ");
             string mask = Console.ReadLine();
-            Directory.CreateDirectory($@"{path}{mask}");
+            Directory.CreateDirectory($"{path}{mask}");
             string[] files = Directory.GetFiles(path);
             Regex reg = new Regex($@"[^\\]*{mask}[^\\]*$");
             foreach (string s in files)
