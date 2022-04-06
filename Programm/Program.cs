@@ -2,84 +2,119 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-
-#pragma warning disable CS8600
-#pragma warning disable CS8602
-#pragma warning disable CS8604
-
-// Что Зачем И Почему
-// Данная программа нужна для получения автомата по
-// дисциплинам: "Разработка программных модулей" и 
-// "Инструментальные средства разработки программного обеспечения"
+using System.Linq;
 
 namespace filecreater
 {
     class Program
     {
         public delegate void func();
+        private readonly string[] Array = { "Create array of files", "Sort files" };
+        private const string Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvmxyz0123456789";
+        public string Path;
+        public List<string> Files;
+        internal Dictionary<string, func> Menu;
+        public Random Rand;
 
-        private string path = $@"{Directory.GetParent(Directory.GetParent(Directory.GetParent(Directory.GetCurrentDirectory()).ToString()).ToString())}\test\";
-
-        public Dictionary<String, func> menu;
-
-        public readonly string[] array = { "FileCreater", "Search" };
-
-        private void Filecreater()
+        private string RandomString(int length)
         {
-            var rand = new Random();
+            return new string(Enumerable.Repeat(Chars, length)
+                .Select(s => s[Rand.Next(s.Length)]).ToArray());
+        }
+
+        private void CreateArrayFiles()
+        {
             Console.Write("Enter count: ");
-            int k = int.Parse(Console.ReadLine());
-            for (int i = 0; i < k; i++)
+            int.TryParse(Console.ReadLine(), out int k);
+            for (;k > 0; k--)
             {
-                string name = "";
-                for (int j = 0; j < rand.Next(7, 19); j++)
-                {
-                    name += Convert.ToChar(rand.Next(97, 122));
-                }
-                name += ".";
-                for (int j = 0; j < rand.Next(2, 5); j++)
-                {
-                    name += Convert.ToChar(rand.Next(97, 122));
-                }
+                string name = RandomString(Rand.Next(1, 19)) + "." + RandomString(Rand.Next(2, 5));
                 Console.WriteLine(name);
-                File.Create($"{path}{name}");
+                File.Create(@$"{Path}\{name}");
+            }
+        }
+        private void SortFiles()
+        {
+            for (int i = 0; i < 3; i++) _search();
+
+            Regex reg = new Regex($@"[^\\]+$");
+            Directory.CreateDirectory($@"{Path}\NS");
+            for (int i = 0; i < Files.Count; i++)
+            {
+                File.Move($@"{Files[i]}", $@"{Path}\NS\{reg.Match(Files[i]).Value}");
             }
         }
 
-        private void Search()
+        private void _search()
         {
             Console.Write("Enter mask for search: ");
             string mask = Console.ReadLine();
-            Directory.CreateDirectory($"{path}{mask}");
-            string[] files = Directory.GetFiles(path);
-            Regex reg = new Regex($@"[^\\]*{mask}[^\\]*$");
-            foreach (string s in files)
-            {
-                string l = reg.Match(s).Value;
-                if (l.Length != 0)
+            Directory.CreateDirectory(@$"{Path}\{mask}");
+            Regex reg = new Regex($@"[^\\]+{mask}[^\\]+$");
+            for (int i = 0; i < Files.Count; i++)
+            { 
+                string f = reg.Match(Files[i]).Value;
+                if (f.Length > 0)
                 {
-                    Console.WriteLine(l);
-                    File.Move($"{path}{l}", $"{path}{mask}\\{l}", true);
+                    try
+                    {
+                        File.Move($@"{Path}\{f}", @$"{Path}\{mask}\{f}");
+                        Console.WriteLine(f);
+                    } 
+                    catch 
+                    {
+                        Console.WriteLine($"Error move file {f}");
+                    }
+                    Files.RemoveAt(i);
                 }
             }
 
         }
-        
-        public Program()
+
+        public void Select(int menu)
         {
-            menu = new Dictionary<string, func> 
-            { 
-                [array[0]] = Filecreater,
-                [array[1]] = Search    
-            };
-            if (Directory.Exists(path)) Directory.CreateDirectory(path);
+            try
+            {
+                Menu[Array[menu]]();
+            }
+            catch 
+            {
+                throw new Exception();
+            }
         }
 
-        static void Main(string[] args)
+        public void PrintMenu()
+        {
+            for (int i = 0; i < Array.Length; i++) Console.WriteLine($"[{i}] {Array[i]}");
+            Console.WriteLine("[*] Exit");
+        }
+
+        public Program()
+        {
+            Console.Write("Enter work directory: ");
+            Path = Console.ReadLine();
+            Rand = new Random();
+            Files = Directory.GetFiles(Path).ToList();
+            Menu = new Dictionary<string, func>
+            {
+                [Array[0]] = CreateArrayFiles,
+                [Array[1]] = SortFiles
+            };
+        }
+
+        static void Main()
         {
             Program prog = new Program();
-            for(int i = 0; i < prog.array.Length; i++) Console.WriteLine($"[{i}] {prog.array[i]}");
-            prog.menu[prog.array[int.Parse(Console.ReadLine())]]();
+            int r = 0;
+            while (true)
+            {
+                prog.PrintMenu();
+                Console.Write("Enter number of functions: ");
+                int.TryParse(Console.ReadLine(), out r);
+                try { prog.Select(r); }
+                catch { break; }
+                Console.WriteLine("\t-------");
+            }
         }
     }
 }
